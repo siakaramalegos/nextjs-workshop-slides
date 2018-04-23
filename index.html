@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>reveal-md</title>
+        <link rel="stylesheet" href="./css/reveal.css">
+        <link rel="stylesheet" href="./_assets/style.css" id="theme">
+        <link rel="stylesheet" href="./css/highlight/zenburn.css">
+        <link rel="stylesheet" href="./css/print/paper.css" type="text/css" media="print">
+
+    </head>
+    <body>
+
+        <div class="reveal">
+            <div class="slides"><section ><section data-markdown><script type="text/template">
+
+# Next.js
+## Sia Karamalegos
+
+</script></section><section data-markdown><script type="text/template">
+
+# Next.js
+
+Next.js is a minimalistic framework for universal, server-rendered (or statically pre-rendered) React applications.
+
+It creates a React app using just one command:
+
+```bash
+$ npm install --save next react react-dom
+```
+
+<aside class="notes"><p>It&#39;s like Create React App, but it builds an app pre-configured for universal, server- or client-rendered React applications.</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+> **Universal** is a term used to emphasize the fact that a particular piece of JavaScript code is able to run in multiple environments.
+
+<small>--Gert Hengeveld, Software Engineer at @Xebia</small>
+
+<aside class="notes"><p>In practice, creating universal apps can be complex, leading to longer cycle times to ship full-featured applications. So what if we could reduce or remove that added complexity and build apps faster?</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+## Next.js Benefits
+
+**Faster page loads**
+
+- Server-rendered by default
+- Can enable prefetching future routes
+- Automatic code splitting
+
+</script></section><section data-markdown><script type="text/template">
+
+## Next.js Benefits
+
+**No build configuration**
+
+- Simple page-based client-side routing
+- Webpack and hot module replacement
+
+</script></section><section data-markdown><script type="text/template">
+
+## Next.js Benefits
+
+**Customizable**
+
+- Use your own Babel and Webpack configurations
+- Implement with Express or any other Node.js HTTP server
+
+</script></section><section data-markdown><script type="text/template">
+
+## What will we be doing?
+
+- Initializing a new app
+- Creating routes/pages
+- Navigation
+- Loading data
+- Dynamic routes
+- Deployment
+- Static exports
+</script></section></section><section ><section data-markdown><script type="text/template">
+# Initializing a new app
+
+</script></section><section data-markdown><script type="text/template">
+
+## You Do
+
+1. Create project and install:
+  ```bash
+  $ mkdir my-app
+  $ cd my-app
+  $ npm init
+  $ npm install --save next react react-dom
+  $ mkdir pages
+  ```
+2. Add scripts to `package.json`:
+  ```javascript
+  {
+    "scripts": {
+      "dev": "next",
+      "build": "next build",
+      "start": "next start"
+    }
+  }
+  ```
+3. Add `.next` to your `.gitignore` file.
+4. `npm run dev` to see your formatted 404 page.
+
+</script></section></section><section ><section data-markdown><script type="text/template">
+# Creating routes/pages
+
+<img src="https://s3.amazonaws.com/viking_education/web_development/web_app_eng/greedy_pup.gif" alt="Greedy puppy stealing other dogs' treats animated gif">
+
+</script></section><section data-markdown><script type="text/template">
+
+## The API is mostly the folder system
+
+Each file in the `/pages/` folder represents a route. The name of the file becomes the path.
+
+<!-- Add screenshot -->
+<img src="/images/pages.png" alt="Folder structure with pages directory" />
+
+<aside class="notes"><p>ask what we got for free</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+## Static files
+
+Put static files in a `/static/` folder and then use like:
+
+```html
+<img src="/static/my-image.png" alt="my image" />
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+## You Do:
+
+1. Create basic `/pages/index.js` and `/pages/about.js` then navigate to `/` and `/about` to see them.
+2. Add an image to the `/static/` folder and use it on one of your pages.
+3. Think about what all we got for *free*.
+
+<small>(Check out branch `1-pages-static` for this plus styling and `<head>` implementation examples)</small>
+
+</script></section><section data-markdown><script type="text/template">
+
+## What we got for free
+
+- Automatic transpilation and bundling (with webpack and babel)
+- Hot code reloading
+- Server rendering and indexing of ./pages
+- Static file serving. ./static/ is mapped to /static/
+- Built-in CSS support with `styled-jsx` (if you want to use it)
+- Back button works!
+
+<aside class="notes"><p>You can use any CSS-in-JS solution like inline styles, or add Next.js modules for css, sass, less, stylus, etc. When you hit the Back button, it navigates the page to the index page entirely via the client; next/link does all the location.history handling for you.</p>
+</aside></script></section></section><section ><section data-markdown><script type="text/template">
+# Navigation
+
+</script></section><section data-markdown><script type="text/template">
+
+## Link
+
+To create links to pages, instead of using an anchor tag, use the API’s `<Link />` component.
+
+`<Link />` performs client-side navigation to preserve app state. When clicked, the target route component is first fetched from the server, then rendered in the browser.
+
+```javascript
+const MyLink = () => (
+  <Link href="/about">
+    <a style={{margin: '10px'}}>About</a>
+  </Link>
+)
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+## Link is a higher-order component
+
+It must contain a node such as an anchor, button, or div, and the style must be applied to that child.
+
+```javascript
+const MyLink = () => (
+  <Link href="/about">
+    <a style={{margin: '10px'}}>About</a>
+  </Link>
+)
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+## Hydrate the client with future navigation paths!!
+
+- `<Link prefetch />` pre-fetches the component's JSON representation in the background, via a ServiceWorker.
+- `prefetch` does not trigger unnecessary data fetching due to a special `getInitialProps` method (*to be continued...*).
+
+<small>Note that `prefetch` only works in production.</small>
+
+<aside class="notes"><p>Just to reiterate, the code is split between each route/page. Only the code for that page is loaded when requested, unless an import is shared across most bundles. Even in those cases, you can use lazy loading of modules or components to only load them on demand, when (or if) needed.</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+## You Do:
+
+1. Create a basic navigation header component using `<Link>`
+2. Prefetch all the routes in the nav.
+3. Import the nav into both Home and About.
+
+<small>(Check out branch `2-navigation` for this plus a shared layout example)</small>
+</script></section></section><section ><section data-markdown><script type="text/template">
+# Loading data
+
+</script></section><section data-markdown><script type="text/template">
+
+## Load data on page load with `getInitialProps`
+
+- Asynchronous, static method
+- Fetches anything that resolves to a JS plain object
+- Populates the component’s props with the returned object
+- On initial load, executed on the server
+- On navigation (not prefetch), executed in the client
+
+</script></section><section data-markdown><script type="text/template">
+
+## `getInitialProps` API
+
+- Receives a context object which contains `pathname`, `query`, `req`, `res`, `err`, etc.
+- Can **only** be used on page components, not child components
+
+```javascript
+MyPage.getInitialProps = async ({ pathname, query, req, res, err }) => {
+  // do something like this to return a plain object
+  const res = await fetch(myApiUrl)
+  const json = await res.json()
+  return { myThings: json.things }
+}
+```
+
+<aside class="notes"><p>also jsonPageRes and asPath.</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+## You Do:
+
+On the home page:
+
+1. Load films data into props from the Star Wars API https://swapi.co/
+2. You can use `isomorphic-unfetch` for universal (client and server) fetching
+3. Render a list of films
+
+<small>(Check out branch `3-loading-data` to see solution)</small>
+
+<aside class="notes"><p>Now that we have some data, let’s look into dynamic routes. We are going to convert this people list to a list of links, and when we click the link, it will go to a page with more info about that character.</p>
+</aside></script></section></section><section ><section data-markdown><script type="text/template">
+# Dynamic routes
+
+</script></section><section data-markdown><script type="text/template">
+
+## Dynamic routes can be created using query strings
+
+- Set up Link path with the query string:
+  ```javascript
+  (title) => <Link href={`/post?title=${title}`}><a>{title}</a></Link>
+  ```
+- Create the target page component, grabbing the query from `props.url`:
+  ```javascript
+  export default (props) => (
+    <div>
+      <h1>{props.url.query.title}</h1>
+      <p>This is the blog post content.</p>
+    </div>
+  )
+  ```
+
+</script></section><section data-markdown><script type="text/template">
+
+## Every page receives the `url` prop
+
+The `url` API includes these properties:
+
+- `pathname` - String of the current path excluding the query string
+- `query` - Object with the parsed query string. Defaults to {}
+- `asPath` - String of the actual path (including the query) shows in the browser
+- `push(url, as=url)` - performs a pushState call with the given url
+- `replace(url, as=url)` - performs a replaceState call with the given url
+
+<aside class="notes"><p>If we didn’t need to populate data through getInitialProps and only needed to use the query in component – component receives url prop with a query property (props.url.query). here, wanted to fetch more data so used the context’s query property (click). Cool, but how make prettier url?</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+## You Do
+
+1. For every film on the home page, add a `Link` to a page for that film
+2. Create a film page which shows content for that film. Remember, `getInitialProps` receives a context object with a `query` property also.
+3. Did you notice any problems?
+
+<small>(Check out branch `4-dynamic-routes` to see solution)</small>
+
+<aside class="notes"><p>What problems did we come across? (no shared global state, ugly url)</p>
+</aside></script></section><section data-markdown><script type="text/template">
+
+## The page-based API has no shared global state
+
+To share state, you have several options:
+
+- Wrapping all components with shared state in a single page/route then create a custom routing API
+- Overriding the `<App>` API with a custom one that keeps state across navigating pages ([API](https://github.com/zeit/next.js#custom-app))
+- Using it with Redux ([example](https://github.com/zeit/next.js/tree/canary/examples/with-redux))
+- And more... check out all of the [examples](https://github.com/zeit/next.js/tree/canary/examples/with-redux) for more possibilities, like Apollo + Redux
+
+</script></section><section data-markdown><script type="text/template">
+
+## The URL is ugly
+
+To make pretty urls, we can use **route masking**. Just add the `as` attribute on the Link with the url you would like:
+
+```javascript
+(title) => (
+  <Link href={`/post?title=${title}`} as={`/post/${title}`}>
+    <a>{title}</a>
+  </Link>
+)
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+## You Do:
+
+1. Add route masking to make our film pages urls prettier.
+2. Test back/forward.
+3. Test refresh.
+
+<small>(Check out branch `5-route-masking` to see solution)</small>
+
+</script></section><section data-markdown><script type="text/template">
+
+## Refreshing masked routes causes 404
+
+The page-based API creates routes on the server according to the file names. No `/films/1` page exists to load on the server, so we need to use the custom server API to fix this.
+
+</script></section><section data-markdown><script type="text/template">
+
+## You Do:
+
+1. Add express `npm i --save express`
+2. Create a `server.js` file at the root of the project directory (walk through this together).
+3. Update the `dev` and `start` scripts in package.json:
+  ```javascript
+  "scripts": {
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js"
+  }
+  ```
+
+<small>(Check out branch `6-custom-server` to see solution)</small>
+
+<aside class="notes"><p>can use any Node.js HTTP server</p>
+</aside></script></section></section><section ><section data-markdown><script type="text/template">
+# Deployment
+
+</script></section><section data-markdown><script type="text/template">
+
+## Setting up scripts
+
+We already created our `build` and `start` scripts which are needed for deployment (in **package.json**):
+
+```javascript
+"scripts": {
+    // ..
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js"
+  },
+```
+
+</script></section><section data-markdown><script type="text/template">
+
+## Running production
+
+To run production locally, run your build an start scripts:
+
+```bash
+$ npm run build
+$ npm run start
+```
+
+Then view at http://localhost:3000/. You can play with prefetching now!
+
+</script></section><section data-markdown><script type="text/template">
+
+## Deployment with Zeit's now
+
+You can deploy a Next.js app into anywhere you can run Node.js. Since ▲ZEIT now is super simple, we'll do it there.
+
+1. Install now https://zeit.co/now
+2. Inside your repo on the command line, run `$ now`
+
+Find my deployed version at https://next-star-wars-eqfobbjnyg.now.sh/
+</script></section></section><section ><section data-markdown><script type="text/template">
+# Static exports
+
+</script></section><section data-markdown><script type="text/template">
+
+## Static exports
+
+Don't want to use a server?
+
+Next.js can also build static web apps that you can then host on Github pages, AWS S3, etc.
+
+</script></section><section data-markdown><script type="text/template">
+
+## Static exports in Next.js:
+
+- Generate a set of pre-rendered HTML pages
+- Support dynamic urls, prefetching, preloading and dynamic imports
+- Do **not** support dynamic (at runtime) pages (at build time is okay)
+
+</script></section><section data-markdown><script type="text/template">
+
+## Static exports how-to
+
+1. Add a fourth script to your `package.json`:
+  ```javascript
+  "scripts": {
+    // ..
+    "export": "next export"`
+  }
+  ```
+2. Create `next.config.js` in the root of the project where you create the export path mapping:
+  ```javascript
+  module.exports = {
+    exportPathMap: function () {
+      return {
+        '/': { page: '/' }
+      }
+    }
+  }
+  ```
+3. Run `npm run build` and `npm run export`. Exported HTML content will now be in an `/out/` directory in your project.
+
+</script></section><section data-markdown><script type="text/template">
+
+## You do:
+
+1. Create the export script.
+2. Create `next.config.js`. We will cheat since we know that the film id's are 1-7. Hint: check the ["with-static-export" example](https://github.com/zeit/next.js/blob/canary/examples/with-static-export/next.config.js) in the Next.js repo.
+3. Build and statically export your app.
+4. (optional) Test locally by adding `serve` (locally or globally) then serving `/out/`:
+  ```bash
+  $ npm i --save serve
+  $ serve out -p 8080
+  ```
+
+<small>(Check out branch `7-static-export` to see solution)</small>
+
+</script></section><section data-markdown><script type="text/template">
+
+## Deploying to Github pages
+
+1. Add `/out/` to `.gitignore`
+2. Add your repo name as an asset prefix in `next.config.js`:
+  ```javascript
+  module.exports = {
+    assetPrefix: isProduction ? '/{reponame}' : '',
+    // ... exportPathMap configuration
+  }
+  ```
+3. Export production `NODE_ENV=production next export`
+4. Add an empty `.nojekyll` file to `/out/`
+5. Install gh-pages for easy Github pages deployment `npm i --save-dev gh-pages`
+5. Push the `/out/` subtree to gh-pages with `gh-pages -d out --dotfiles`
+
+<aside class="notes"><p>.nojekyll because GitHub Pages will by default ignore any files and folders prefixed by an underscore (like _next)</p>
+</aside></script></section></section><section  data-markdown><script type="text/template">
+# Resources
+
+Continue your learning with these resources and tutorials:
+
+- About Next.js https://zeit.co/blog/next
+- [Next.js GitHub repo](https://github.com/zeit/next.js/)
+- [Official Tutorial](https://learnnextjs.com) by Zeit
+- [New version 5.0 details](https://zeit.co/blog/next5) on the Zeit blog
+- [7 Principles of Rich Web Applications](https://rauchg.com/2014/7-principles-of-rich-web-applications) by Guillermo Rauch, the inspiration for Next.js
+
+<small>Interested in having me speak at your event? Check out my [speaking history](https://github.com/siakaramalegos/sia_speaks) and/or my [website](https://siakaramalegos.github.io/).</small>
+</script></section></div>
+        </div>
+
+        <script src="./lib/js/head.min.js"></script>
+        <script src="./js/reveal.js"></script>
+
+        <script>
+            function extend() {
+              var target = {};
+              for (var i = 0; i < arguments.length; i++) {
+                var source = arguments[i];
+                for (var key in source) {
+                  if (source.hasOwnProperty(key)) {
+                    target[key] = source[key];
+                  }
+                }
+              }
+              return target;
+            }
+
+            // Optional libraries used to extend on reveal.js
+            var deps = [
+              { src: './lib/js/classList.js', condition: function() { return !document.body.classList; } },
+              { src: './plugin/markdown/marked.js', condition: function() { return !!document.querySelector('[data-markdown]'); } },
+              { src: './plugin/markdown/markdown.js', condition: function() { return !!document.querySelector('[data-markdown]'); } },
+              { src: './plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+              { src: './plugin/zoom-js/zoom.js', async: true },
+              { src: './plugin/notes/notes.js', async: true },
+              { src: './plugin/math/math.js', async: true }
+            ];
+
+            // default options to init reveal.js
+            var defaultOptions = {
+              controls: true,
+              progress: true,
+              history: true,
+              center: true,
+              transition: 'default', // none/fade/slide/convex/concave/zoom
+              dependencies: deps
+            };
+
+            // options from URL query string
+            var queryOptions = Reveal.getQueryHash() || {};
+
+            var options = {};
+            options = extend(defaultOptions, options, queryOptions);
+        </script>
+
+
+        <script>
+            Reveal.initialize(options);
+        </script>
+    </body>
+</html>
